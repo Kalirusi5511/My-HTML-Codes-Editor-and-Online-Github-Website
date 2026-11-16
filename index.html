@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Mobiler HTML Viewer & Generator</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap');
+
+        :root {
+            --bg-color: #0f1722;
+            --text-main: #ffffff;
+            --text-muted: #8b96a5;
+            --accent-blue: #4a8df0;
+            --accent-blue-hover: #3b7adb;
+            --card-bg: #1e2632;
+            --border-color: #2c3542;
+            --code-bg: #151d28;
+            --success-green: #10b981;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html, body {
+            height: 100%;
+            overflow: hidden;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            /* Feste Höhe verhindert das Springen auf iOS */
+            height: 100vh;
+            height: 100dvh; 
+            width: 100vw;
+        }
+
+        /* --- HEADER --- */
+        header {
+            background-color: var(--card-bg);
+            height: 52px;
+            min-height: 52px;
+            padding: 0 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            z-index: 10;
+        }
+
+        header h1 {
+            font-size: 13px;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 50%;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        .btn {
+            background-color: var(--accent-blue);
+            color: white;
+            border: none;
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+            width: 36px;
+            height: 36px;
+        }
+
+        .btn:hover, .btn:active { background-color: var(--accent-blue-hover); }
+        .btn.secondary { background-color: var(--border-color); }
+        .btn.secondary:hover, .btn.secondary:active { background-color: #3b4451; }
+        .btn svg { width: 16px; height: 16px; fill: currentColor; }
+
+        /* --- MAIN LAYOUT --- */
+        .main-container {
+            display: flex;
+            flex-direction: column; /* Mobil: Untereinander */
+            flex: 1;
+            overflow: hidden;
+            min-height: 0;
+        }
+
+        /* --- EDITOR PANEL (Oben) --- */
+        .editor-panel {
+            display: flex;
+            flex-direction: column;
+            background-color: var(--code-bg);
+            border-bottom: 1px solid var(--border-color);
+            /* Höhe wird per JS berechnet */
+            flex: 1; 
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            padding: 4px 12px;
+            background-color: var(--card-bg);
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--text-muted);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            min-height: 26px;
+        }
+
+        textarea {
+            flex: 1;
+            width: 100%;
+            background-color: var(--code-bg);
+            color: #a5b3ce;
+            font-family: 'Fira Code', monospace;
+            font-size: 16px; /* Verhindert Auto-Zoom auf iOS */
+            padding: 10px;
+            border: none;
+            outline: none;
+            resize: none;
+            line-height: 1.5;
+            -webkit-overflow-scrolling: touch;
+            white-space: pre;
+            overflow-wrap: normal;
+            overflow-x: auto;
+        }
+
+        /* --- PREVIEW PANEL (Unten) --- */
+        .preview-panel {
+            display: flex;
+            flex-direction: column;
+            background-color: #ffffff;
+            /* Höhe wird per JS berechnet */
+            flex: 1;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        iframe {
+            flex: 1;
+            width: 100%;
+            height: 100%;
+            border: none;
+            background-color: #ffffff;
+        }
+
+        #fileUpload { display: none; }
+
+        /* --- STATUS BAR --- */
+        .status-bar {
+            height: 26px;
+            min-height: 26px;
+            padding: 0 12px;
+            background-color: var(--card-bg);
+            font-size: 10px;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* --- DESKTOP (Breitbild) --- */
+        @media (min-width: 769px) {
+            .main-container {
+                flex-direction: row; /* Desktop: Nebeneinander */
+            }
+            .editor-panel {
+                border-right: 1px solid var(--border-color);
+                border-bottom: none;
+            }
+            .btn { width: auto; padding: 8px 12px; gap: 6px; }
+            .btn span { display: inline; }
+            header h1 { font-size: 16px; max-width: none; }
+        }
+
+        /* --- LANDSCAPE (Querformat) --- */
+        @media (max-height: 500px) and (orientation: landscape) {
+            .main-container {
+                flex-direction: row;
+            }
+            .editor-panel {
+                border-right: 1px solid var(--border-color);
+                border-bottom: none;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>📝 HTML Viewer</h1>
+        <div class="header-actions">
+            <button class="btn secondary" onclick="document.getElementById('fileUpload').click()">
+                <svg viewBox="0 0 24 24"><path d="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z"/></svg>
+                <span style="display:none;">Laden</span>
+            </button>
+            <input type="file" id="fileUpload" accept=".html, .htm, .txt">
+
+            <button class="btn" onclick="downloadHTML()">
+                <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+                <span style="display:none;">Speichern</span>
+            </button>
+        </div>
+    </header>
+
+    <div class="main-container" id="mainContainer">
+        <!-- Editor -->
+        <div class="editor-panel" id="editorPanel">
+            <div class="panel-header">
+                <span>Code Editor</span>
+                <span style="font-size: 9px; color: #6b7280;">Live</span>
+            </div>
+            <textarea id="htmlCode" placeholder="HTML Code hier einfügen..." spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off"><!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Test</title>
+</head>
+<body>
+    <h1>Hallo Welt!</h1>
+</body>
+</html></textarea>
+        </div>
+
+        <!-- Preview -->
+        <div class="preview-panel" id="previewPanel">
+            <div class="panel-header" style="background: #f3f4f6; color: #374151; border-bottom: 1px solid #e5e7eb;">
+                <span>Vorschau</span>
+                <span id="previewStatus" style="font-size: 9px; color: #10b981;">● Bereit</span>
+            </div>
+            <iframe id="previewFrame" sandbox="allow-scripts allow-modals"></iframe>
+        </div>
+    </div>
+
+    <div class="status-bar">
+        <span id="charCount">0 Zeichen</span>
+        <span>Lokaler Viewer</span>
+    </div>
+
+    <script>
+        // --- 1. DYNAMISCHE HÖHENBERECHNUNG ---
+        // Das ist der Fix für das Abschneiden auf mobilen Browsern
+        function adjustLayout() {
+            const mainContainer = document.getElementById('mainContainer');
+            const header = document.querySelector('header');
+            const statusBar = document.querySelector('.status-bar');
+            
+            // Berechne die verfügbare Höhe für den Hauptbereich
+            const windowHeight = window.innerHeight;
+            const headerHeight = header.offsetHeight;
+            const statusHeight = statusBar.offsetHeight;
+            const availableHeight = windowHeight - headerHeight - statusHeight;
+
+            // Setze die Höhe des Containers exakt
+            mainContainer.style.height = availableHeight + 'px';
+
+            // Wenn wir im mobilen Hochformat sind (Breite < 769px), teilen wir 50/50
+            if (window.innerWidth <= 768) {
+                const editorPanel = document.getElementById('editorPanel');
+                const previewPanel = document.getElementById('previewPanel');
+                const halfHeight = availableHeight / 2;
+                
+                editorPanel.style.height = halfHeight + 'px';
+                previewPanel.style.height = halfHeight + 'px';
+            } else {
+                // Desktop: Höhe zurücksetzen (CSS übernimmt)
+                document.getElementById('editorPanel').style.height = '';
+                document.getElementById('previewPanel').style.height = '';
+            }
+        }
+
+        // Event-Listener für Größenänderungen (Adressleiste, Rotation)
+        window.addEventListener('resize', adjustLayout);
+        window.addEventListener('orientationchange', () => {
+            setTimeout(adjustLayout, 100); // Kurz warten nach Rotation
+        });
+        
+        // Initial ausführen
+        document.addEventListener('DOMContentLoaded', adjustLayout);
+
+        // --- 2. EDITOR LOGIK ---
+        const htmlCode = document.getElementById('htmlCode');
+        const previewFrame = document.getElementById('previewFrame');
+        const charCount = document.getElementById('charCount');
+        const previewStatus = document.getElementById('previewStatus');
+        const fileUpload = document.getElementById('fileUpload');
+
+        let updateTimeout;
+        function updatePreview() {
+            const code = htmlCode.value;
+            charCount.textContent = `${code.length} Zeichen`;
+            
+            previewStatus.textContent = '● Update...';
+            previewStatus.style.color = '#f59e0b';
+
+            clearTimeout(updateTimeout);
+            updateTimeout = setTimeout(() => {
+                const blob = new Blob([code], {type: 'text/html'});
+                const url = URL.createObjectURL(blob);
+                previewFrame.src = url;
+
+                previewStatus.textContent = '● Bereit';
+                previewStatus.style.color = '#10b981';
+
+                setTimeout(() => URL.revokeObjectURL(url), 1000);
+            }, 400); // Etwas mehr Verzögerung für flüssiges Tippen auf Mobil
+        }
+
+        htmlCode.addEventListener('input', updatePreview);
+        updatePreview(); // Initial laden
+
+        // --- 3. DATEI UPLOAD ---
+        fileUpload.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                htmlCode.value = event.target.result;
+                updatePreview();
+                document.querySelector('h1').textContent = `📝 ${file.name}`;
+            };
+            reader.readAsText(file);
+        });
+
+        // --- 4. DATEI DOWNLOAD ---
+        function downloadHTML() {
+            const code = htmlCode.value;
+            if (!code.trim()) return alert("Editor ist leer.");
+            
+            let filename = prompt("Dateiname:", "meine_seite.html");
+            if (!filename) return;
+            if (!filename.endsWith('.html') && !filename.endsWith('.htm')) filename += '.html';
+
+            const blob = new Blob([code], {type: 'text/html'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            previewStatus.textContent = '● Gespeichert!';
+            previewStatus.style.color = '#10b981';
+            setTimeout(() => { previewStatus.textContent = '● Bereit'; }, 3000);
+        }
+
+        // --- 5. DRAG & DROP ---
+        htmlCode.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            htmlCode.style.border = '2px dashed var(--accent-blue)';
+        });
+        htmlCode.addEventListener('dragleave', () => {
+            htmlCode.style.border = 'none';
+        });
+        htmlCode.addEventListener('drop', (e) => {
+            e.preventDefault();
+            htmlCode.style.border = 'none';
+            const file = e.dataTransfer.files[0];
+            if (file && (file.name.endsWith('.html') || file.name.endsWith('.htm') || file.name.endsWith('.txt'))) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    htmlCode.value = event.target.result;
+                    updatePreview();
+                    document.querySelector('h1').textContent = `📝 ${file.name}`;
+                };
+                reader.readAsText(file);
+            }
+        });
+    </script>
+</body>
+</html>
